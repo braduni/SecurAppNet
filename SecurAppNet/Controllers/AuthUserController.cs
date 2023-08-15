@@ -8,20 +8,20 @@ using System.Text;
 
 namespace SecurAppNet.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthUserController : ControllerBase
     {
         private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
 
-        public AuthController(IUserService userService, IConfiguration configuration)
+        public AuthUserController(IUserService userService, IConfiguration configuration)
         {
             _userService = userService;
             _configuration = configuration;
         }
 
-        [HttpPost("register")]
+        [HttpPost]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequestDto request)
         {
             try
@@ -55,7 +55,7 @@ namespace SecurAppNet.Controllers
             }
         }
 
-        [HttpPost("login")]
+        [HttpPost]
         public async Task<IActionResult> Login(UserLoginRequestDto request)
         {
             try
@@ -72,7 +72,14 @@ namespace SecurAppNet.Controllers
                     return BadRequest("Invalid username or password. Please check your credentials and try again.");
                 }
 
-                string token = GenerateJwtToken(user);
+                var roles = new List<string> { "User" };
+
+                if (user.IsAdmin)
+                {
+                    roles.Add("Admin");
+                }
+
+                string token = GenerateJwtToken(user, roles);
 
                 return Ok(token);
             }
@@ -82,13 +89,17 @@ namespace SecurAppNet.Controllers
             }
         }
 
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(User user, List<string> roles)
         {
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, "User")
             };
+
+            foreach (var role in roles) 
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             var securityKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_configuration["AppSettings:SecurityKey"]!));

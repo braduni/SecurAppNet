@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SecurAppNet.Models;
 using SecurAppNet.Services.UserService;
+using System.Data;
 
 namespace SecurAppNet.Controllers
 {
@@ -15,7 +17,7 @@ namespace SecurAppNet.Controllers
             _userService = userService;
         }
 
-        [HttpGet("GetAll")]
+        [HttpGet, Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> GetAll() 
         {
             try
@@ -25,7 +27,8 @@ namespace SecurAppNet.Controllers
                 var usersDto = users.Select(user => new UserDto
                 {
                     Id = user.Id,
-                    Username = user.Username
+                    Username = user.Username,
+                    isAdmin = user.IsAdmin      
                 });
 
                 return Ok(usersDto);
@@ -37,7 +40,7 @@ namespace SecurAppNet.Controllers
             }  
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id}"), Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] UserUpdateRequestDto request)
         {
             try
@@ -62,6 +65,7 @@ namespace SecurAppNet.Controllers
                 }
 
                 userToUpdate.Username = request.Username;
+                userToUpdate.IsAdmin = request.IsAdmin;
 
                 await _userService.UpdateAsync(userToUpdate);
 
@@ -74,7 +78,7 @@ namespace SecurAppNet.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try
