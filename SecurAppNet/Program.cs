@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SecurAppNet.Data;
+using SecurAppNet.Services.UserService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
